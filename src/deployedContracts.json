@@ -1,0 +1,1 @@
+{"gst":{"address":"0x31ee41d8Aa7A1a733030DEd894C051822F767a03","abi":[{"inputs":[],"name":"printhello","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"nonpayable","type":"function","signature":"0x77ed209d"}]}}
