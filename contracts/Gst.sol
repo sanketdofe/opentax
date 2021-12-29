@@ -69,113 +69,123 @@ contract Gst {
         uint256 govtId
     );
 
-    function createGovernmentAccount(address payable _addr, string memory _govType) public {
-        governmentMap[governmentCount] = Government(_addr, _govType, governmentCount);
-        emit GovernmentAccountCreated(_addr, _govType, governmentCount);
+    function createGovernmentAccount(address payable addr, string memory govType) public {
+        governmentMap[governmentCount] = Government(addr, govType, governmentCount);
+        emit GovernmentAccountCreated(addr, govType, governmentCount);
         governmentCount++;
     }
 
     function createAccount(
-        string memory _firstName,
-        string memory _lastname,
-        string memory _email,
-        string memory _gstNumber,
-        string memory _userType,
+        string memory firstName,
+        string memory lastname,
+        string memory email,
+        string memory gstNumber,
+        string memory userType,
         address payable addr
         )
         public {
             usersMap[userCount] = Users(
                 userCount,
                 addr,
-                _firstName,
-                _lastname,
-                _email,
-                _gstNumber,
-                _userType
+                firstName,
+                lastname,
+                email,
+                gstNumber,
+                userType
                 );
 
             emit AccountCreated(
                 userCount,
-                msg.sender,
-                _firstName,
-                _lastname,
-                _email,
-                _gstNumber,
-                _userType
+                addr,
+                firstName,
+                lastname,
+                email,
+                gstNumber,
+                userType
                 );
             userCount++;
     }
 
     function generateBill(
-        address payable _receiverAddress,
-        string memory _materialSelected,
-        string memory _beforeGstAmount,
-        string memory _afterGstAmount,
-        string[] memory _gstAmount,
-        string memory _gstPercent,
-        address payable _billIssuer
+        address payable receiverAddress,
+        string memory materialSelected,
+        string memory beforeGstAmount,
+        string memory afterGstAmount,
+        string[] memory gstAmount,
+        string memory gstPercent,
+        address payable billIssuer
         )
         public {
             billMap[billCount] = Bill(
                 billCount,
-                _receiverAddress,
-                _materialSelected,
-                _beforeGstAmount,
-                _afterGstAmount,
-                _gstAmount,
-                _gstPercent,
+                receiverAddress,
+                materialSelected,
+                beforeGstAmount,
+                afterGstAmount,
+                gstAmount,
+                gstPercent,
                 false,
-                _billIssuer
+                billIssuer
                 );
 
             emit BillCreated(
                 billCount,
-                _receiverAddress,
-                _materialSelected,
-                _beforeGstAmount,
-                _afterGstAmount,
-                _gstAmount,
-                _gstPercent,
+                receiverAddress,
+                materialSelected,
+                beforeGstAmount,
+                afterGstAmount,
+                gstAmount,
+                gstPercent,
                 false,
-                _billIssuer
+                billIssuer
                 );
             billCount++;
     }
 
-    function transferAmountToUser(address _receiver, uint256 amount) public payable {
+    function transferAmountToUser(address receiver, uint256 amount) public payable {
         uint256 userAccountId;
         for(uint256 i = 0; i < userCount; i++){
-            if(usersMap[i].addr == _receiver){
+            if(usersMap[i].addr == receiver){
                 userAccountId = usersMap[i].id;
             }
         }
         usersMap[userAccountId].addr.transfer(amount);
     }
 
-    function transferAmountToSGST(address _sgstAddress, uint256 amount) public payable {
+    function transferAmountToSGST(address sgstAddress, uint256 amount) public payable {
         uint256 governmentAccountId;
         for(uint256 i = 0; i < governmentCount; i++){
-            if(usersMap[i].addr == _sgstAddress){
+            if(usersMap[i].addr == sgstAddress){
                 governmentAccountId = governmentMap[i].govtId;
             }
         }
         governmentMap[governmentAccountId].addr.transfer(amount);
     }
 
-    function transferAmountToCGST(address _cgstAddress, uint256 amount) public payable {
+    function transferAmountToCGST(address cgstAddress, uint256 amount) public payable {
         uint256 governmentAccountId;
         for(uint256 i = 0; i < governmentCount; i++){
-            if(usersMap[i].addr == _cgstAddress){
+            if(usersMap[i].addr == cgstAddress){
                 governmentAccountId = governmentMap[i].govtId;
             }
         }
         governmentMap[governmentAccountId].addr.transfer(amount);
     }
 
-    function gstAmountArray(uint256 _billId) public view returns(string[] memory) {
-        return billMap[_billId].gstAmount;
+    function transferAmountToIGST(address cgstAddress, uint256 amount) public payable {
+        uint256 governmentAccountId;
+        for(uint256 i = 0; i < governmentCount; i++){
+            if(usersMap[i].addr == cgstAddress){
+                governmentAccountId = governmentMap[i].govtId;
+            }
+        }
+        governmentMap[governmentAccountId].addr.transfer(amount);
     }
-    function paidBill(uint256 _billID, bool _paidStatus) public {
-        billMap[_billID].paid = _paidStatus;
+
+    function gstAmountArray(uint256 billId) public view returns(string[] memory) {
+        return billMap[billId].gstAmount;
+    }
+    function paidBill(uint256 billID, bool paidStatus) public {
+        billMap[billID].paid = paidStatus;
     }
 }
