@@ -19,7 +19,7 @@ string constant AUTHORIZEDMINTERS = "AUTHORIZEDMINTERS";
 contract Interactions {
     address public owner;
     Privileges privilegeContract;
-    RupeeToken public rupeeTokenContract;
+    RupeeToken rupeeTokenContract;
 
     struct Request {
         string requestID;

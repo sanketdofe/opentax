@@ -3,6 +3,7 @@ pragma solidity >=0.7.0 <0.9.0;
 
 import './Privileges.sol';
 import './RupeeToken.sol';
+import './Interactions.sol';
 
 contract IncomeTax {
     string constant ALLPAID = "ALLPAID";
@@ -36,11 +37,13 @@ contract IncomeTax {
 
     Privileges privilegeContract;
     RupeeToken rupeeTokenContract;
+    Interactions interactionsContract;
 
-    constructor(address _privilegeContract, address _rupeeTokenContract){
+    constructor(address _privilegeContract, address _rupeeTokenContract, address _interactionsContract){
         owner = msg.sender;
         privilegeContract = Privileges(_privilegeContract);
         rupeeTokenContract = RupeeToken(_rupeeTokenContract);
+        interactionsContract = Interactions(_interactionsContract);
     }
 
 
@@ -82,10 +85,12 @@ contract IncomeTax {
         require(panRepo[panNo] == msg.sender && keccak256(bytes(taxpayers[msg.sender].pan)) == keccak256(bytes(panNo)), "Not authenticated");
         address addressKey = panRepo[panNo];
         require(taxpayers[addressKey].taxes.length>0, "No tax data present");
+        require(rupeeTokenContract.balanceOf(msg.sender) >= uint(payerAmount), "Insufficient Balance");
         for(uint i=taxpayers[addressKey].taxes.length-1; i>=0; i--) {
             if(taxpayers[addressKey].taxes[i].taxYear == payerTaxYear) {
                 if(keccak256(bytes(taxpayers[addressKey].taxes[i].paidStatus)) != keccak256(bytes(ALLPAID))) {
                     int paidAmt;
+                    address toAccAddress = interactionsContract.getGovtAccountAddress("IT");
                     if(taxpayers[addressKey].taxes[i].remainingAmount >= payerAmount) {
                         paidAmt = payerAmount;
                         taxpayers[addressKey].taxes[i].remainingAmount -= payerAmount;
@@ -100,6 +105,7 @@ contract IncomeTax {
                                 taxpayers[addressKey].outstandingAmount -= paidAmt;
                             }
                         }
+                        rupeeTokenContract.transfer(toAccAddress, uint(paidAmt));
                         emit paidTax(msg.sender, paidAmt);
                         return 0;
                     }else{
@@ -107,6 +113,7 @@ contract IncomeTax {
                         payerAmount -= taxpayers[addressKey].taxes[i].remainingAmount;
                         taxpayers[addressKey].taxes[i].remainingAmount = 0;
                         taxpayers[addressKey].outstandingAmount = 0;
+                        rupeeTokenContract.transfer(toAccAddress, uint(paidAmt));
                         emit paidTax(msg.sender, paidAmt);
                         return payerAmount;
                     }

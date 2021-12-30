@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import './Privileges.sol';
 import './Interactions.sol';
+import './RupeeToken.sol';
 
 contract Gst {
     address public owner;
@@ -65,10 +66,12 @@ contract Gst {
 
     Privileges privilegeContract;
     Interactions interactionsContract;
+    RupeeToken rupeeTokenContract;
 
-    constructor(address _privilegeContract, address _interactionsContract){
+    constructor(address _privilegeContract, address _rupeeTokenContract, address _interactionsContract){
         owner = msg.sender;
         privilegeContract = Privileges(_privilegeContract);
+        rupeeTokenContract = RupeeToken(_rupeeTokenContract);
         interactionsContract = Interactions(_interactionsContract);
     }
 
@@ -142,19 +145,19 @@ contract Gst {
             return "Bill already paid";
         }
         uint256 totalamt = getBillAmount(b.gstAmount);
-        if(interactionsContract.rupeeTokenContract().balanceOf(msg.sender) < totalamt){
+        if(rupeeTokenContract.balanceOf(msg.sender) < totalamt){
             revert("Insufficient Balance for this transaction");
         }
         if(b.isInterstate == true) {
             address toAccAddress = interactionsContract.getGovtAccountAddress("IGST");
-            interactionsContract.rupeeTokenContract().transfer(toAccAddress, totalamt);
+            rupeeTokenContract.transfer(toAccAddress, totalamt);
             setBillPaid(gstNo, billId);
             return "Success";
         }else{
             address toStateAccAddress = interactionsContract.getGovtAccountAddress(concatenate(u.stateCode, "SGST"));
             address toCentralAccAddress = interactionsContract.getGovtAccountAddress("CGST");
-            interactionsContract.rupeeTokenContract().transfer(toStateAccAddress, totalamt/2);
-            interactionsContract.rupeeTokenContract().transfer(toCentralAccAddress, totalamt/2);
+            rupeeTokenContract.transfer(toStateAccAddress, totalamt/2);
+            rupeeTokenContract.transfer(toCentralAccAddress, totalamt/2);
             setBillPaid(gstNo, billId);
             return "Success";
         }
@@ -218,7 +221,7 @@ contract Gst {
 
     ///////////////////////////UTILITY FUNCTION/////////////////////////
 
-    function concatenate(string memory a, string memory b) public pure returns (string memory) {
+    function concatenate(string memory a, string memory b) internal pure returns (string memory) {
         return string(abi.encodePacked(a , b));
     } 
 
