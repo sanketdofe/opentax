@@ -33,11 +33,11 @@ contract RupeeToken is ERC20Token {
 
     Privileges privilegeContract;
     
-    constructor(uint256 total, address _privilegeContracts) {  
+    constructor(uint256 total, address _privilegeContract) {  
     	_totalSupply = total;
     	balances[msg.sender] = _totalSupply;
     	owner = msg.sender;
-        privilegeContract = Privileges(_privilegeContracts);
+        privilegeContract = Privileges(_privilegeContract);
     }  
     
     
@@ -99,18 +99,41 @@ contract RupeeToken is ERC20Token {
         }
     }
 
-    function burn(uint256 amount) public returns (bool success) {
-        if(amount <= balances[msg.sender]){
+    function burn(address account, uint256 amount) public returns (bool success) {
+        require(privilegeContract.isAuthorizedMinter(msg.sender) == true, "Not Authorized to Burn");
+        if(amount <= balances[account]){
             _totalSupply -= amount;
-            balances[msg.sender] -= amount;
-            emit Burn(msg.sender, amount);
+            balances[account] -= amount;
+            emit Burn(account, amount);
             return true;
         } else {
             return false;
         }
     }
   
-  
+    /////////////////////AUTOAPPROVE ADMINS TO TRANSFER FUNDS///////////////////
     
+    function transferFromGovtAccount(address from, address to, uint256 value, string memory approvedBy, address approverAddress) public returns (bool) {
+        require(balanceOf(from) >= value, "Insufficient Balance");
+        if(keccak256(bytes(approvedBy)) == keccak256(bytes("PRIVILEGEDADMINS"))){
+            require(privilegeContract.isPrivilegedAdmin(approverAddress) == true, "No Access Rights");
+            allowed[from][msg.sender] = value;
+            emit Approval(from, msg.sender, value);
+            return transferFrom(from, to, value);
+        }
+        else if(keccak256(bytes(approvedBy)) == keccak256(bytes("GSTADMINS"))){
+            require(privilegeContract.isGstAdmin(approverAddress) == true, "No Access Rights");
+            allowed[from][msg.sender] = value;
+            emit Approval(from, msg.sender, value);
+            return transferFrom(from, to, value);
+        }
+        else if(keccak256(bytes(approvedBy)) == keccak256(bytes("INCOMETAXADMINS"))){
+            require(privilegeContract.isIncomeTaxAdmin(approverAddress) == true, "No Access Rights");
+            allowed[from][msg.sender] = value;
+            emit Approval(from, msg.sender, value);
+            return transferFrom(from, to, value);
+        }
+        return false;
+    }
 }
 
