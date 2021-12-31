@@ -10,7 +10,8 @@ import Container from '@mui/material/Container';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import PersonIcon from '@mui/icons-material/Person';
+import { useEthers, useEtherBalance } from "@usedapp/core";
+import Jazzicon from "@metamask/jazzicon";
 
 const pages = ['GST', 'Income Tax', 'Others'];
 const settings = ['Profile', 'Dashboard', 'Logout'];
@@ -34,15 +35,30 @@ const NavBar = () => {
     setAnchorElUser(null);
   };
 
+  const {activateBrowserWallet, account } = useEthers();
+  const etherBalance = useEtherBalance(account);
+
+  function handleConnectWallet() {
+    activateBrowserWallet();
+  }
+
+  const ref = React.useRef();
+  React.useEffect(() => {
+    if (account && ref.current) {
+      ref.current.innerHTML = "";
+      ref.current.appendChild(Jazzicon(16, parseInt(account.slice(2, 10), 16)));
+    }
+  }, [account]);
+  
   return (
-    <AppBar position="static">
+    <AppBar position="static" style={{backgroundColor: "#1A202C"}}>
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           <Typography
             variant="h6"
             noWrap
             component="div"
-            sx={{ mr: 2, display: { xs: 'none', md: 'flex' } }}
+            sx={{color: "white", mr: 2, display: { xs: 'none', md: 'flex' } }}
           >
             OpenTax
           </Typography>
@@ -87,7 +103,7 @@ const NavBar = () => {
             variant="h6"
             noWrap
             component="div"
-            sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}
+            sx={{color: "white", flexGrow: 1, display: { xs: 'flex', md: 'none' } }}
           >
             OpenTax
           </Typography>
@@ -102,13 +118,50 @@ const NavBar = () => {
               </Button>
             ))}
           </Box>
-
-          <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <PersonIcon sx={{color: '#ffffff'}}/>
-              </IconButton>
+          {account ? 
+            (<Box
+              style={{ 
+                flexGrow: 0, 
+                display: "flex",
+                alignItems: "center",
+                backgroundColor: "#2D3748",
+                borderRadius: "12px",
+                padding: "0" 
+              }}
+            >
+              <Box style={{margin: "0 3px"}}>
+                <Typography color="white" fontSize="16px">
+                  {etherBalance && etherBalance.toString().slice(0, 6)} ETH
+                </Typography>
+              </Box>
+              <Button
+                style={{
+                  backgroundColor: "#1A202C", 
+                  border: "1px solid transparent", 
+                  borderRadius: "12px", 
+                  margin: "1px",
+                  padding: "0 5px",
+                  height: "38px",
+                }}
+                onClick={handleOpenUserMenu}
+              >
+                <Typography color="white" fontSize="16px" fontWeight="medium" marginRight={1}>
+                  {account &&
+                    `${account.slice(0, 6)}...${account.slice(
+                      account.length - 4,
+                      account.length
+                    )}`}
+                </Typography>
+                <div style={{height: "1rem", width: "1rem", borderRadius: "1.125rem", backgroundColor: "black"}} ref={ref}>
+                </div>
+              </Button>
+            </Box>
+          ) : (
+            <Tooltip title="Connects your wallet">
+              <Button size="large" variant="text" onClick={handleConnectWallet} sx={{ p: 0.5, color: 'white' }}>Connect</Button>
             </Tooltip>
+          )}
+          <Box sx={{ flexGrow: 0 }}>
             <Menu
               sx={{ mt: '45px' }}
               id="menu-appbar"
