@@ -10,8 +10,9 @@ import Container from '@mui/material/Container';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import { useEthers, useEtherBalance } from "@usedapp/core";
+import { shortenIfAddress, useEthers} from "@usedapp/core";
 import Jazzicon from "@metamask/jazzicon";
+import rupeeTokenContract from '../contractInterface/rupeeTokenContract';
 
 const pages = ['GST', 'Income Tax', 'Others'];
 const settings = ['Profile', 'Dashboard', 'Logout'];
@@ -36,8 +37,7 @@ const NavBar = () => {
   };
 
   const {activateBrowserWallet, account } = useEthers();
-  const etherBalance = useEtherBalance(account);
-
+  var inrBalance = rupeeTokenContract.useContractGetter('balanceOf', [account]);
   function handleConnectWallet() {
     activateBrowserWallet();
   }
@@ -129,9 +129,9 @@ const NavBar = () => {
                 padding: "0" 
               }}
             >
-              <Box style={{margin: "0 3px"}}>
+              <Box style={{margin: "0 5px", paddingLeft: "4px"}}>
                 <Typography color="white" fontSize="16px">
-                  {etherBalance && etherBalance.toString().slice(0, 6)} ETH
+                  {inrBalance && (inrBalance.toNumber()/100).toFixed(2)} INR
                 </Typography>
               </Box>
               <Button
@@ -146,11 +146,7 @@ const NavBar = () => {
                 onClick={handleOpenUserMenu}
               >
                 <Typography color="white" fontSize="16px" fontWeight="medium" marginRight={1}>
-                  {account &&
-                    `${account.slice(0, 6)}...${account.slice(
-                      account.length - 4,
-                      account.length
-                    )}`}
+                  {shortenIfAddress(account)}
                 </Typography>
                 <div style={{height: "1rem", width: "1rem", borderRadius: "1.125rem", backgroundColor: "black"}} ref={ref}>
                 </div>
