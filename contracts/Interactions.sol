@@ -57,7 +57,7 @@ contract Interactions {
 
     struct Government {
         address addr;
-        string accountName; //MHSGST, IGST, 
+        string accountName; //MHSGST, IGST, IT
         string accountType; //CGST, SGST, IGST, INCOMETAX, STATERESERVE, CENTRERESERVE, CONSOLIDATEDFUND
         string govtType; //CENTRAL, STATE
         string govtName; //MHGOVT, CENTRAL
@@ -73,6 +73,7 @@ contract Interactions {
         rupeeTokenContract = RupeeToken(_rupeeTokenContract);
     }
 
+    event Log(string message);
 
     /////////////////////GOVT ACCOUNT FUNCTIONS///////////////////////
 
@@ -93,6 +94,7 @@ contract Interactions {
             emit GovernmentAccountCreated(addr, accname, acctype, govttype, govtname, govtid);
         }
         else{
+            emit Log("Account with given name exists already");
             revert("Account with given name exists already");
         }
     }
@@ -195,8 +197,12 @@ contract Interactions {
         bool status = rupeeTokenContract.transferFromGovtAccount(from, to, value, approvedBy, approverAddress);
         if(status == true){
             emit TransferTokens(from, to, value, approvedBy);
+            emit Log("Transfer Success");
+            return status;
+        }else{
+            emit Log("Transfer Fail");
+            return status;
         }
-        return status;
     }
 
 
@@ -209,8 +215,10 @@ contract Interactions {
         if(keccak256(bytes(transaction.status)) == keccak256(bytes("SUCCESS"))){
             uint amt = (transaction.rupee * 100) + transaction.paise;
             mintTokensTo(transaction.senderAddress, amt);
+            emit Log("Mint Success");
             return "SUCCESS";
         }
+        emit Log("Mint Fail");
         return "FAILED";
     }
     
@@ -221,8 +229,10 @@ contract Interactions {
         if(keccak256(bytes(transaction.status)) == keccak256(bytes("SUCCESS"))){
             uint amt = (transaction.rupee * 100) + transaction.paise;
             burnTokensFrom(transaction.senderAddress, amt);
+            emit Log("Burn Success");
             return "SUCCESS";
         }
+        emit Log("Burn Success");
         return "FAILED";
     }
 

@@ -13,6 +13,7 @@ contract IncomeTax {
 
     event paidTax(address payingAddress, int paidAmount);
     event addTaxpayer(bool added);
+    event Log(string message);
 
     struct Tax {
         int owedAmount;
@@ -59,7 +60,9 @@ contract IncomeTax {
             panRepo[panNo] = payerAddress;
             numberOfTaxpayers++;
             emit addTaxpayer(true);
+            emit Log("Add TaxPayer Success");
         } else {
+            emit Log("Add TaxPayer Fail");
             revert("Taxpayer exists already");
         }
     }
@@ -70,12 +73,14 @@ contract IncomeTax {
         int toBePaid = taxpayers[addressKey].outstandingAmount;
         toBePaid += payerAmount;
         taxpayers[addressKey].taxes.push(Tax(payerAmount, payerTaxYear, _paidstatus, toBePaid)); 
+        emit Log("Add Tax Success");
     }
 
     function addOutstandingAmountForTaxpayer(string memory panNo, int amount) public {
         require(privilegeContract.isIncomeTaxAdmin(msg.sender) == true, "Not Authorized to Add Tax");
         address addressKey = panRepo[panNo];
         taxpayers[addressKey].outstandingAmount += amount;
+        emit Log("Add Outstanding Amount Success");
     }
 
 
@@ -107,6 +112,7 @@ contract IncomeTax {
                         }
                         rupeeTokenContract.transfer(toAccAddress, uint(paidAmt));
                         emit paidTax(msg.sender, paidAmt);
+                        emit Log("Pay Tax Success");
                         return 0;
                     }else{
                         paidAmt = taxpayers[addressKey].taxes[i].remainingAmount;
@@ -115,6 +121,7 @@ contract IncomeTax {
                         taxpayers[addressKey].outstandingAmount = 0;
                         rupeeTokenContract.transfer(toAccAddress, uint(paidAmt));
                         emit paidTax(msg.sender, paidAmt);
+                        emit Log("Pay Tax Success");
                         return payerAmount;
                     }
                 }
@@ -122,6 +129,7 @@ contract IncomeTax {
                 break;
             }
         }
+        emit Log("Pay Tax Fail");
         return payerAmount;
     }
 

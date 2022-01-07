@@ -20,37 +20,37 @@ contract Privileges {
     //////////////////MODIFIERS///////////////////////
 
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        require(msg.sender == owner, "No Access Rights");
         _;
     }
 
     modifier onlyPrivilegedAdmin() {
-        require(privilegedAdmins[msg.sender] == true);
+        require(privilegedAdmins[msg.sender] == true, "No Access Rights");
         _;
     }
 
     modifier onlyGstAdmin() {
-        require(gstAdmins[msg.sender] == true);
+        require(gstAdmins[msg.sender] == true, "No Access Rights");
         _;
     }
 
     modifier onlyIncomeTaxAdmin() {
-        require(incomeTaxAdmins[msg.sender] == true);
+        require(incomeTaxAdmins[msg.sender] == true, "No Access Rights");
         _;
     }
 
     modifier onlyTokenAdmin() {
-        require(tokenAdmins[msg.sender] == true);
+        require(tokenAdmins[msg.sender] == true, "No Access Rights");
         _;
     }
 
     modifier onlyAuthorisedMinter() {
-        require(authorizedMinters[msg.sender] == true);
+        require(authorizedMinters[msg.sender] == true, "No Access Rights");
         _;
     }
 
     modifier onlyTokenAdminORPrivilegedAdmin() {
-        require(tokenAdmins[msg.sender] == true || privilegedAdmins[msg.sender] == true);
+        require(tokenAdmins[msg.sender] == true || privilegedAdmins[msg.sender] == true, "No Access Rights");
         _;
     }
     

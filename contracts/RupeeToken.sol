@@ -40,7 +40,8 @@ contract RupeeToken is ERC20Token {
         privilegeContract = Privileges(_privilegeContract);
     }  
     
-    
+    event Log(string message);
+
     function totalSupply() public override view returns (uint256) {
         return _totalSupply;
     }
@@ -54,8 +55,10 @@ contract RupeeToken is ERC20Token {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
             emit Transfer(msg.sender, _to, _value);
+            emit Log("Transfer Success");
             return true;
         } else { 
+            emit Log("Transfer Fail");
             return false; 
         }
     }
@@ -66,8 +69,10 @@ contract RupeeToken is ERC20Token {
             allowed[_from][msg.sender] -= _value;
             balances[_to] += _value;
             emit Transfer(_from, _to, _value);
+            emit Log("Transfer Success");
             return true;
         } else { 
+            emit Log("Transfer Fail");
             return false; 
         }
     }
@@ -93,8 +98,10 @@ contract RupeeToken is ERC20Token {
             _totalSupply += amount;
             balances[account] += amount;
             emit Mint(account, amount);
+            emit Log("Mint Success");
             return true;
         } else {
+            emit Log("Mint Fail");
             return false;
         }
     }
@@ -105,8 +112,10 @@ contract RupeeToken is ERC20Token {
             _totalSupply -= amount;
             balances[account] -= amount;
             emit Burn(account, amount);
+            emit Log("Burn Success");
             return true;
         } else {
+            emit Log("Burn Fail");
             return false;
         }
     }
@@ -133,6 +142,7 @@ contract RupeeToken is ERC20Token {
             emit Approval(from, msg.sender, value);
             return transferFrom(from, to, value);
         }
+        emit Log("Transfer Fail");
         return false;
     }
 }

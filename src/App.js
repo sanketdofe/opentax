@@ -5,6 +5,8 @@ import GstAdmin from './components/Gst/GstAdmin.js';
 import GstHome from './components/Gst/GstHome.js';
 import Home from './components/Home.js';
 import NavBar from './components/NavBar.js';
+import PrivilegedAdmin from './components/PrivilegedAdmin.js';
+import MinterHome from './components/MinterHome.js';
 
 function App() {
   // const {activateBrowserWallet, account } = useEthers();
@@ -40,6 +42,8 @@ function App() {
         <NavBar/>
         <Routes>
           <Route path="/" element={<Home/>} />
+          <Route path="privileged-admin" element={<PrivilegedAdmin/>} />
+          <Route path="minter" element={<MinterHome/>} />
           <Route path="gst" element={<GstHome/>} />
           <Route path="gst/admin" element={<GstAdmin/>} />
           <Route path="gst/user" element={<GstUser/>} />

@@ -1,17 +1,17 @@
-import { Button, Grid, Modal, Paper, TextField } from "@mui/material";
+import { Button, Grid, MenuItem, Modal, Paper, Select, TextField } from "@mui/material";
 import { Fragment, useEffect, useState } from "react";
 import { utils } from 'ethers';
 import { Contract } from '@ethersproject/contracts';
 import { useContractFunction} from "@usedapp/core";
 import compiledContracts from "../../contractInterface/compiledContracts.json";
 
-const gstContractInterface = new utils.Interface(compiledContracts["Gst"].abi);
-const gstContract = new Contract(process.env.REACT_APP_GSTCONTRACTADDRESS, gstContractInterface);
 
 function GstAdmin() {
     const [openModal, setOpenModal] = useState(false);
     const [modalContent, setModalContent] = useState(<></>);
     
+    const gstContractInterface = new utils.Interface(compiledContracts["Gst"].abi);
+    const gstContract = new Contract(process.env.REACT_APP_GSTCONTRACTADDRESS, gstContractInterface);
 
     function handleModalClose(){
         setOpenModal(false);
@@ -25,9 +25,12 @@ function GstAdmin() {
                 setModalContent(newAccountForm);
                 break;
             case "genbill":
-                break
+                setModalContent(generateBillForm);
+                break;
             case "transferrefund":
                 break;
+            default:
+                return;
         }
         setOpenModal(true);
     }
@@ -42,33 +45,87 @@ function GstAdmin() {
         stateCode: "",
         userAddr: ""
     });
-
-    const {state, send, events} = useContractFunction(gstContract, "createAccount", {});
-    function handleAccountTextFieldChange(event){
+    
+    const handleAccountFormChange = (event) => {
+        console.log(event.target);
         setAccountForm({ ...accountForm, [event.target.name]: event.target.value});
     }
+
     var returnedVal = null;
+    const createAccountMethod = useContractFunction(gstContract, "createAccount", {});
+
     function handleCreateAccount() {
         // console.log(createAccount);
-        returnedVal = send(accountForm.fname, accountForm.lname, accountForm.userEmail, accountForm.gstNo, accountForm._userType, accountForm.stateCode, accountForm.userAddr);
+        returnedVal = createAccountMethod.send(accountForm.fname, accountForm.lname, accountForm.userEmail, accountForm.gstNo, accountForm._userType, accountForm.stateCode, accountForm.userAddr);
         returnedVal.then(a => console.log(a));
     }
 
     useEffect(() => {
-        console.log(state);
+        console.log(createAccountMethod);
         console.log(returnedVal);
-    }, [state, returnedVal]);
+    }, [createAccountMethod, returnedVal]);
 
     const newAccountForm = <>
-        <TextField sx={{my:1}} name="fname" value={accountForm.fname} onChange={handleAccountTextFieldChange} label="First Name" variant='outlined' fullWidth/>
-        <TextField sx={{my:1}} name="lname" value={accountForm.lname} onChange={handleAccountTextFieldChange} label="Last Name" variant='outlined' fullWidth/>
-        <TextField sx={{my:1}} name="userEmail" value={accountForm.userEmail} onChange={handleAccountTextFieldChange} label="Email" variant='outlined' fullWidth/>
-        <TextField sx={{my:1}} name="gstNo" value={accountForm.gstNo} onChange={handleAccountTextFieldChange} label="GST Number" variant='outlined' fullWidth/>
-        <TextField sx={{my:1}} name="_userType" value={accountForm._userType} onChange={handleAccountTextFieldChange} label="User Type" variant='outlined' fullWidth/>
-        <TextField sx={{my:1}} name="stateCode" value={accountForm.stateCode} onChange={handleAccountTextFieldChange} label="State Code" variant='outlined' fullWidth/>
-        <TextField sx={{my:1}} name="userAddr" value={accountForm.userAddr} onChange={handleAccountTextFieldChange} label="Address" variant='outlined' fullWidth/>
+        <h3 style={{margin: '1px'}}>Add New Account</h3>
+        <TextField sx={{my:1}} onChange={handleAccountFormChange} value={accountForm.fname} name="fname" label="First Name" variant='outlined' fullWidth/>
+        <TextField sx={{my:1}} onChange={handleAccountFormChange} value={accountForm.lname} name="lname" label="Last Name" variant='outlined' fullWidth/>
+        <TextField sx={{my:1}} onChange={handleAccountFormChange} value={accountForm.userEmail} name="userEmail" label="Email" variant='outlined' fullWidth/>
+        <TextField sx={{my:1}} onChange={handleAccountFormChange} value={accountForm.gstNo} name="gstNo" label="GST Number" variant='outlined' fullWidth/>
+        <TextField sx={{my:1}} onChange={handleAccountFormChange} value={accountForm._userType} name="_userType" label="User Type" variant='outlined' fullWidth/>
+        <TextField sx={{my:1}} onChange={handleAccountFormChange} value={accountForm.stateCode} name="stateCode" label="State Code" variant='outlined' fullWidth/>
+        <TextField sx={{my:1}} onChange={handleAccountFormChange} value={accountForm.userAddr} name="userAddr" label="Address" variant='outlined' fullWidth/>
         <Button variant="contained" onClick={handleCreateAccount}>Submit</Button>
     </>
+
+    /////////////////////Generate Bill//////////////////////
+    const [billForm, setBillForm] = useState({
+        gstNo: "",
+        materialSelected: "",
+        beforeGstAmt: "",
+        gstPercent: "",
+        isInterstate: false
+    });
+    
+    const handleBillFormChange = (event) => {
+        setBillForm({ ...billForm, [event.target.name]: event.target.value});
+    }
+
+    const generateBillMethod = useContractFunction(gstContract, "generateBill", {});
+    
+    const handleBillFormSubmit = () => {
+        var beforeGSTAmountarray = billForm.beforeGstAmt.split(',');
+        var GSTpercentarray = billForm.beforeGstAmt.split(',');
+        if(beforeGSTAmountarray.length !== GSTpercentarray.length){
+            alert("Before GST Amount and GST percent are not organized properly");
+            return;
+        }
+        var TotalGSTPercent = GSTpercentarray.reduce((s, a) => s+a, 0);
+        var GSTAmountArray = beforeGSTAmountarray.map((a, i) => 0.01*a*GSTpercentarray[i]);
+        var afterGstAmount = beforeGSTAmountarray.map((a, i) => a + GSTAmountArray[i]);
+        returnedVal = generateBillMethod.send(billForm.gstNo, billForm.materialSelected, billForm.beforeGstAmt, afterGstAmount.toString(), GSTAmountArray, TotalGSTPercent, "GSTADMINS", billForm.isInterstate);
+        returnedVal.then(a => console.log(a));
+    }
+
+
+    const generateBillForm = <>
+        <h3 style={{margin: '1px'}}>Generate Bill</h3>
+        <TextField sx={{my:1}} onChange={handleBillFormChange} value={billForm.gstNo} name="gstNo" label="GST Number" variant='outlined' fullWidth/>
+        <TextField sx={{my:1}} onChange={handleBillFormChange} value={billForm.materialSelected} name="materialSelected" label="Materials (Comma Seperated)" variant='outlined' fullWidth/>
+        <TextField sx={{my:1}} onChange={handleBillFormChange} value={billForm.beforeGstAmt} name="beforeGstAmt" label="Before GST Amount (Comma Seperated)" variant='outlined' fullWidth/>
+        <TextField sx={{my:1}} onChange={handleBillFormChange} value={billForm.gstPercent} name="gstPercent" label="GST Percent (Comma Seperated)" variant='outlined' fullWidth/>
+        <Select
+            name="isInterstate"
+            onChange={handleBillFormChange}
+            value={billForm.isInterstate}
+            label="Is Goods/Service Transfer Interstate"
+            sx={{my: 1, width:575}} 
+        >
+            <MenuItem value={true}>Is Goods/Service Transfer Interstate = Yes</MenuItem>
+            <MenuItem value={false}>Is Goods/Service Transfer Interstate = No</MenuItem>
+        </Select>  
+        <Button variant="contained" onClick={handleBillFormSubmit}>Submit</Button>
+    </>
+
     return (
         <Fragment>
             <div style={{margin: '50px', padding: '20px'}}>

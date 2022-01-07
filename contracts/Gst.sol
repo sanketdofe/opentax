@@ -64,6 +64,8 @@ contract Gst {
         string stateCode
     );
 
+    event Log(string message);
+
     Privileges privilegeContract;
     Interactions interactionsContract;
     RupeeToken rupeeTokenContract;
@@ -90,8 +92,10 @@ contract Gst {
             users[gstNo].stateCode = stateCode;
             gstNoRepo[userAddr] = gstNo;
             emit AccountCreated(userCount+1, userAddr, fName, lName, userEmail, gstNo, _userType, stateCode);
+            emit Log("Account Create Success");
             userCount++;
         } else {
+            emit Log("Accout Create Fail");
             revert("User already exists");
         }
     }
@@ -125,6 +129,7 @@ contract Gst {
             msg.sender,
             billIssuerName
         );
+        emit Log("Bill Create Success");
     }
 
     function transferAmountToUser(string memory gstNo, string memory fromAccountName, uint256 amount) public returns (bool) {
@@ -142,16 +147,19 @@ contract Gst {
         User memory u = getGstUser(gstNo);
         Bill memory b = getBill(gstNo, billId);
         if(b.paid == true) {
+            emit Log("Bill already paid");
             return "Bill already paid";
         }
         uint256 totalamt = getBillAmount(b.gstAmount);
         if(rupeeTokenContract.balanceOf(msg.sender) < totalamt){
+            emit Log("Insufficient Balance for this transaction");
             revert("Insufficient Balance for this transaction");
         }
         if(b.isInterstate == true) {
             address toAccAddress = interactionsContract.getGovtAccountAddress("IGST");
             rupeeTokenContract.transfer(toAccAddress, totalamt);
             setBillPaid(gstNo, billId);
+            emit Log("Transfer Success");
             return "Success";
         }else{
             address toStateAccAddress = interactionsContract.getGovtAccountAddress(concatenate(u.stateCode, "SGST"));
@@ -159,6 +167,7 @@ contract Gst {
             rupeeTokenContract.transfer(toStateAccAddress, totalamt/2);
             rupeeTokenContract.transfer(toCentralAccAddress, totalamt/2);
             setBillPaid(gstNo, billId);
+            emit Log("Transfer Success");
             return "Success";
         }
     }

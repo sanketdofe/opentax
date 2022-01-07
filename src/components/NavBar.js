@@ -12,12 +12,20 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import { shortenIfAddress, useEthers} from "@usedapp/core";
 import Jazzicon from "@metamask/jazzicon";
+import {useNavigate } from "react-router-dom";
 import rupeeTokenContract from '../contractInterface/rupeeTokenContract';
+import privilegesContract from '../contractInterface/privilegesContract';
 
-const pages = ['GST', 'Income Tax', 'Others'];
+var pages = {
+  'GST': 'gst', 
+  'Income Tax': '/', 
+  'Others': '/'
+}
+
 const settings = ['Profile', 'Dashboard', 'Logout'];
 
 const NavBar = () => {
+  let navigate = useNavigate();
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
 
@@ -42,6 +50,34 @@ const NavBar = () => {
     activateBrowserWallet();
   }
 
+  var isPrivilegedAdmin = privilegesContract.useContractGetter('isPrivilegedAdmin', [account]);
+
+  React.useEffect(() => {
+    if(typeof isPrivilegedAdmin==='boolean' && isPrivilegedAdmin){
+      if(!("Privileged Admin" in pages)){
+        pages["Privileged Admin"] = "privileged-admin";
+      }
+    }
+  }, [isPrivilegedAdmin]);
+
+  React.useEffect(() => {
+    pages = {
+      'GST': 'gst', 
+      'Income Tax': '/', 
+      'Others': '/'
+    }
+  }, [account]);
+
+  var isAuthorizedMinter = privilegesContract.useContractGetter('isAuthorizedMinter', [account]);
+
+  React.useEffect(() => {
+    if(typeof isAuthorizedMinter==='boolean' && isAuthorizedMinter){
+      if(!("Minter Section" in pages)){
+        pages["Minter Section"] = "minter";
+      }
+    }
+  }, [isAuthorizedMinter]);
+
   const ref = React.useRef();
   React.useEffect(() => {
     if (account && ref.current) {
@@ -56,6 +92,7 @@ const NavBar = () => {
         <Toolbar disableGutters>
           <Typography
             variant="h6"
+            onClick={() => navigate('')}
             noWrap
             component="div"
             sx={{color: "white", mr: 2, display: { xs: 'none', md: 'flex' } }}
@@ -92,8 +129,8 @@ const NavBar = () => {
                 display: { xs: 'block', md: 'none' },
               }}
             >
-              {pages.map((page) => (
-                <MenuItem key={page} onClick={handleCloseNavMenu}>
+              {Object.keys(pages).map((page) => (
+                <MenuItem key={page} onClick={() => navigate(pages[page])}>
                   <Typography textAlign="center">{page}</Typography>
                 </MenuItem>
               ))}
@@ -108,10 +145,10 @@ const NavBar = () => {
             OpenTax
           </Typography>
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {pages.map((page) => (
+            {Object.keys(pages).map((page) => (
               <Button
                 key={page}
-                onClick={handleCloseNavMenu}
+                onClick={() => navigate(pages[page])}
                 sx={{ my: 2, color: 'white', display: 'block' }}
               >
                 {page}
